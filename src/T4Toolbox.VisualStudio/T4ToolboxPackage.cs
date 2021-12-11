@@ -38,8 +38,10 @@ namespace T4Toolbox.VisualStudio
     [ProvideCodeGenerator(typeof(ScriptFileGenerator), ScriptFileGenerator.Name, ScriptFileGenerator.Description, false, ProjectSystem = ProvideCodeGeneratorAttribute.VisualBasicProjectGuid)]
 
     // Auto-load the package for C# and Visual Basic projects to extend file properties 
+#pragma warning disable VSSDK004 // Use BackgroundLoad flag in ProvideAutoLoad attribute for asynchronous auto load.
     [ProvideAutoLoad(VSConstants.UICONTEXT.CSharpProject_string)]
     [ProvideAutoLoad(VSConstants.UICONTEXT.VBProject_string)]
+#pragma warning restore VSSDK004 // Use BackgroundLoad flag in ProvideAutoLoad attribute for asynchronous auto load.
 
     // Ensure VS experimental hive can find the extension dlls.
     [ProvideBindingPath]

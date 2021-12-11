@@ -7,7 +7,6 @@ namespace T4Toolbox.VisualStudio
     using System;
     using System.CodeDom.Compiler;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.IO;
@@ -16,6 +15,7 @@ namespace T4Toolbox.VisualStudio
     using System.Text;
     using EnvDTE;
     using EnvDTE80;
+    using Microsoft;
     using Microsoft.Build.Execution;
     using Microsoft.VisualStudio;
     using Microsoft.VisualStudio.Shell.Interop;
@@ -44,9 +44,11 @@ namespace T4Toolbox.VisualStudio
             this.inputDirectory = Path.GetDirectoryName(inputFile);
             this.outputFiles = outputFiles;
             this.dte = (DTE)serviceProvider.GetService(typeof(DTE));
+            Assumes.Present(this.dte);
             this.projects = GetAllProjects(this.dte.Solution);
             this.input = this.dte.Solution.FindProjectItem(this.inputFile);
             this.templatingHost = (ITextTemplatingEngineHost)this.serviceProvider.GetService(typeof(STextTemplating));
+            Assumes.Present(this.templatingHost);
         }
 
         /// <summary>
@@ -203,7 +205,7 @@ namespace T4Toolbox.VisualStudio
         /// </summary>
         private static void ConfigureProjectItemMetadata(ProjectItem projectItem, OutputFile output)
         {
-            // Set build projerties for the target project item
+            // Set build properties for the target project item
             foreach (KeyValuePair<string, string> metadata in output.Metadata)
             {
                 // Set well-known metadata items via ProjectItem.Properties for immediate effect in Visual Studio

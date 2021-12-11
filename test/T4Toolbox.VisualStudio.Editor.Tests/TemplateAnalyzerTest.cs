@@ -68,7 +68,7 @@ namespace T4Toolbox.VisualStudio.Editor
             var target = TemplateAnalyzer.GetOrCreate(buffer);
             Template template = target.CurrentAnalysis.Template;
             Assert.NotNull(template);
-            Assert.Equal(1, template.ChildNodes().Count());
+            Assert.Single(template.ChildNodes());
         }
 
         [Fact]
@@ -78,7 +78,7 @@ namespace T4Toolbox.VisualStudio.Editor
             var target = TemplateAnalyzer.GetOrCreate(buffer);
             Template template = target.CurrentAnalysis.Template;
             Assert.NotNull(template);
-            Assert.Equal(0, template.ChildNodes().Count());
+            Assert.Empty(template.ChildNodes());
         }
 
         [Fact]
@@ -86,10 +86,10 @@ namespace T4Toolbox.VisualStudio.Editor
         {
             var buffer = new FakeTextBuffer("<#@ template language=\"VB\" #>");
             var target = TemplateAnalyzer.GetOrCreate(buffer);
-            Assert.Equal(1, target.CurrentAnalysis.Template.ChildNodes().Count()); // Need to touch lazy Template before buffer change for test to be valid
+            Assert.Single(target.CurrentAnalysis.Template.ChildNodes()); // Need to touch lazy Template before buffer change for test to be valid
 
             buffer.CurrentSnapshot = new FakeTextSnapshot(string.Empty);
-            Assert.Equal(0, target.CurrentAnalysis.Template.ChildNodes().Count());
+            Assert.Empty(target.CurrentAnalysis.Template.ChildNodes());
         }
 
         [Fact]
@@ -121,24 +121,40 @@ namespace T4Toolbox.VisualStudio.Editor
         [Fact, SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.GC.Collect", Justification = "This is a test of garbage collection")]
         public static void GetOrCreateDoesNotPreventGarbageCollectionOfPreviouslyCreatedTemplateAnalyzers()
         {
-            var analyzer = new WeakReference(TemplateAnalyzer.GetOrCreate(new FakeTextBuffer(string.Empty)));
+            WeakReference GetTemplateAnalyzerReference()
+            {
+                var textBuffer = new FakeTextBuffer(string.Empty);
+                var analyzer = TemplateAnalyzer.GetOrCreate(textBuffer);
+
+                return new WeakReference(analyzer);
+            }
+
+            var analyzerReference = GetTemplateAnalyzerReference();
 
             GC.Collect(2, GCCollectionMode.Forced);
             GC.WaitForPendingFinalizers();
 
-            Assert.False(analyzer.IsAlive);
+            Assert.False(analyzerReference.IsAlive);
         }
 
         [Fact, SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.GC.Collect", Justification = "This is a test of garbage collection")]
         public static void GetOrCreateDoesNotPreventGarbageCollectionOfTextBuffers()
         {
-            var buffer = new WeakReference(new FakeTextBuffer(string.Empty));
-            TemplateAnalyzer.GetOrCreate((ITextBuffer)buffer.Target);
+            WeakReference GetTextBufferReference()
+            {
+                var textBuffer = new FakeTextBuffer(string.Empty);
+                var weakReference = new WeakReference(textBuffer);
+                TemplateAnalyzer.GetOrCreate(textBuffer);
+
+                return weakReference;
+            }
+
+            var bufferReference = GetTextBufferReference();
 
             GC.Collect(2, GCCollectionMode.Forced);
             GC.WaitForPendingFinalizers();
 
-            Assert.False(buffer.IsAlive);
+            Assert.False(bufferReference.IsAlive);
         }
 
         [Fact]

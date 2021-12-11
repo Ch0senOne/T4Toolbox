@@ -15,8 +15,8 @@ using System.Runtime.InteropServices;
 
 [assembly: AssemblyProduct(T4Toolbox.AssemblyInfo.Product)]
 [assembly: AssemblyDescription(T4Toolbox.AssemblyInfo.Description)]
-[assembly: AssemblyCompany("Oleg Sych")]
-[assembly: AssemblyCopyright("Copyright © Oleg Sych. All Rights Reserved.")]
+[assembly: AssemblyCompany("Anton Shafalyuk")]
+[assembly: AssemblyCopyright("Copyright © Anton Shafalyuk. All Rights Reserved.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: AssemblyVersion(T4Toolbox.AssemblyInfo.Version)]

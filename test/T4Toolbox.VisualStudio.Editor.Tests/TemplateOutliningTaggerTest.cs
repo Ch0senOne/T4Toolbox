@@ -6,6 +6,7 @@ namespace T4Toolbox.VisualStudio.Editor
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using Microsoft.VisualStudio.Text;
     using Microsoft.VisualStudio.Text.Tagging;
@@ -53,7 +54,7 @@ namespace T4Toolbox.VisualStudio.Editor
 
             for (int i = 1; i <= 10; i++)
             {
-                codeBlock += "Line" + i + Environment.NewLine;
+                codeBlock += "Line" + i.ToString(CultureInfo.InvariantCulture) + Environment.NewLine;
             }
 
             codeBlock += "#>";

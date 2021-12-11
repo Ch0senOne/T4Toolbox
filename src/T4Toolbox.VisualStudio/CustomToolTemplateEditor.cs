@@ -8,6 +8,7 @@ namespace T4Toolbox.VisualStudio
     using System.ComponentModel;
     using System.Drawing.Design;
     using System.IO;
+    using Microsoft;
     using Microsoft.VisualStudio;
     using Microsoft.VisualStudio.Shell.Interop;
     using Microsoft.Win32;
@@ -57,6 +58,7 @@ namespace T4Toolbox.VisualStudio
 
             string templateFullPath = fileName;
             var templateLocator = (TemplateLocator)context.GetService(typeof(TemplateLocator));
+            Assumes.Present(templateLocator);
             if (!templateLocator.LocateTemplate(inputFullPath, ref templateFullPath))
             {
                 return Path.Combine(Path.GetDirectoryName(inputFullPath), fileName);

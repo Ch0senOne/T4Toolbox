@@ -6,7 +6,9 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
 {
     using System;
     using System.IO;
+    using System.Threading.Tasks;
     using EnvDTE;
+    using Microsoft.VisualStudio.Shell;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     [TestClass]
@@ -16,13 +18,12 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
         private ITransformationContextProvider provider;
 
         [TestInitialize]
-        public void TestInitialize()
+        public async Task TestInitializeAsync()
         {
-            UIThreadDispatcher.Invoke(delegate
-            {
-                this.project = this.CreateTestProject();
-                this.provider = (ITransformationContextProvider)ServiceProvider.GetService(typeof(ITransformationContextProvider));
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            this.project = this.CreateTestProject();
+            this.provider = (ITransformationContextProvider)ServiceProvider.GetService(typeof(ITransformationContextProvider));
         }
 
         #region GetMetdataValue

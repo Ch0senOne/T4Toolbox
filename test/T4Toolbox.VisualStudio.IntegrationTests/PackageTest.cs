@@ -11,6 +11,7 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
     using System.Windows.Media;
     using Microsoft.VisualStudio;
     using Microsoft.VisualStudio.ComponentModelHost;
+    using Microsoft.VisualStudio.Shell;
     using Microsoft.VisualStudio.Shell.Interop;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Microsoft.VisualStudio.Text.Classification;
@@ -25,47 +26,42 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
     {
         [TestMethod]
         [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "FxCop incorrectly flags async test methods.")]
-        public async Task PackageLoads()
+        public async Task PackageLoadsAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                var shell = (IVsShell)ServiceProvider.GetService(typeof(SVsShell));
-                IVsPackage package;
-                var packageGuid = new Guid(T4ToolboxPackage.Id);
-                Assert.AreEqual(VSConstants.S_OK, shell.LoadPackage(ref packageGuid, out package));
-                Assert.IsNotNull(package);
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            var shell = (IVsShell)ServiceProvider.GetService(typeof(SVsShell));
+            IVsPackage package;
+            var packageGuid = new Guid(T4ToolboxPackage.Id);
+            Assert.AreEqual(VSConstants.S_OK, shell.LoadPackage(ref packageGuid, out package));
+            Assert.IsNotNull(package);
         }
 
         [TestMethod]
         [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "FxCop incorrectly flags async test methods.")]
-        public async Task PackageRegistersTransformationContextProcessor()
+        public async Task PackageRegistersTransformationContextProcessorAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                var templatingHost = (ITextTemplatingEngineHost)ServiceProvider.GetService(typeof(STextTemplating));
-                Type processorType = templatingHost.ResolveDirectiveProcessor(TransformationContextProcessor.Name);
-                Assert.AreEqual(typeof(TransformationContextProcessor), processorType);
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            var templatingHost = (ITextTemplatingEngineHost)ServiceProvider.GetService(typeof(STextTemplating));
+            Type processorType = templatingHost.ResolveDirectiveProcessor(TransformationContextProcessor.Name);
+            Assert.AreEqual(typeof(TransformationContextProcessor), processorType);
         }
 
         [TestMethod]
         [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "FxCop incorrectly flags async test methods.")]
-        public async Task PackageDeploysAndRegistersT4ToolboxIncludeFile()
+        public async Task PackageDeploysAndRegistersT4ToolboxIncludeFileAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                // Make the T4 Host think it is processing a template, otherwise it doesn't search for include folders
-                var templatingService = (ITextTemplating)ServiceProvider.GetService(typeof(STextTemplating));
-                templatingService.ProcessTemplate("C:\\dummy.txt", string.Empty); // Note the non-.TT extension. T4 Toolbox include files should be available for templates of all file extensions.
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-                // Ask the T4 host to resolve the T4Toolbox.tt include file
-                var templatingHost = (ITextTemplatingEngineHost)ServiceProvider.GetService(typeof(STextTemplating));
-                string content, location;
-                Assert.IsTrue(templatingHost.LoadIncludeText("T4Toolbox.tt", out content, out location));
-                Assert.IsFalse(string.IsNullOrWhiteSpace(content));
-                Assert.IsTrue(File.Exists(location));
-            });
+            // Make the T4 Host think it is processing a template, otherwise it doesn't search for include folders
+            var templatingService = (ITextTemplating)ServiceProvider.GetService(typeof(STextTemplating));
+            templatingService.ProcessTemplate("C:\\dummy.txt", string.Empty); // Note the non-.TT extension. T4 Toolbox include files should be available for templates of all file extensions.
+
+            // Ask the T4 host to resolve the T4Toolbox.tt include file
+            var templatingHost = (ITextTemplatingEngineHost)ServiceProvider.GetService(typeof(STextTemplating));
+            string content, location;
+            Assert.IsTrue(templatingHost.LoadIncludeText("T4Toolbox.tt", out content, out location));
+            Assert.IsFalse(string.IsNullOrWhiteSpace(content));
+            Assert.IsTrue(File.Exists(location));
         }
 
         [TestMethod]

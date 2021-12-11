@@ -45,5 +45,15 @@ namespace T4Toolbox.VisualStudio.Editor
         {
             throw new NotImplementedException();
         }
+
+        public ILayeredClassificationType GetClassificationType(ClassificationLayer layer, string type)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ILayeredClassificationType CreateClassificationType(ClassificationLayer layer, string type, IEnumerable<IClassificationType> baseTypes)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

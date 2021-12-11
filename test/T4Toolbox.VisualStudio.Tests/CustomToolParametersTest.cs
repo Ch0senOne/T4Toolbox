@@ -108,12 +108,12 @@ namespace T4Toolbox.VisualStudio.Tests
         {
             this.projectItem.SetItemAttribute(ItemMetadata.Generator, "TextTemplatingFileGenerator");
             const string TemplateContent = 
-                "<#@ assembly name=\"System.Data.OracleClient, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=x86\" #>" +
+                "<#@ assembly name=\"System.Data.OracleClient, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089\" #>" +
                 "<#@ parameter name=\"TestParameter\" type=\"System.Data.OracleClient.OracleType\" #>";
             File.WriteAllText(this.projectItem.TestFile.FullName, TemplateContent);
             var target = new CustomToolParameters(this.dte, this.project, this.projectItem.Id);
             PropertyDescriptor parameter = target.GetProperties().Cast<PropertyDescriptor>().Single();
-            StringAssert.Contains(parameter.PropertyType.Assembly.FullName, "System.Data.OracleClient");
+            StringAssert.Contains(parameter.PropertyType.Assembly.FullName, "System.Data.OracleClient", StringComparison.Ordinal);
         }
 
         [TestMethod]
@@ -134,7 +134,7 @@ namespace T4Toolbox.VisualStudio.Tests
             Assert.AreEqual("TestParameter", property.Name);
             Assert.IsTrue(property.IsReadOnly);
             var attribute = property.Attributes.OfType<System.ComponentModel.DescriptionAttribute>().Single();
-            StringAssert.Contains(attribute.Description, "NonexistentType");
+            StringAssert.Contains(attribute.Description, "NonexistentType", StringComparison.Ordinal);
         }
 
         [TestMethod]

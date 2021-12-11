@@ -29,7 +29,7 @@ namespace T4Toolbox.TemplateAnalysis
         public static void ConstructorIsPrivateBecauseDirectiveDescriptorsAreMeantToBeAccessedOnlyThroughStaticMethodsOfTheClass()
         {
             ConstructorInfo[] constructors = typeof(DirectiveDescriptor).GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            Assert.NotEqual(0, constructors.Length);
+            Assert.NotEmpty(constructors);
             Assert.True(constructors.All(c => c.IsPrivate));                
         }
 

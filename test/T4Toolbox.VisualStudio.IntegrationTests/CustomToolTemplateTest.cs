@@ -8,6 +8,7 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
     using System.IO;
     using System.Threading.Tasks;
     using EnvDTE;
+    using Microsoft.VisualStudio.Shell;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     [TestClass]
@@ -16,101 +17,87 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
         private const string TextFileItemTemplate = "Text File";
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task TemplatePropertyIsAvailableForAllProjectItemsOfTargetProject()
+        public async Task TemplatePropertyIsAvailableForAllProjectItemsOfTargetProjectAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                ProjectItem projectItem = this.CreateTestProjectItem(TextFileItemTemplate);
-                Assert.IsNotNull(projectItem.Properties.Item(ProjectItemProperty.CustomToolTemplate));
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            ProjectItem projectItem = this.CreateTestProjectItem(TextFileItemTemplate);
+            Assert.IsNotNull(projectItem.Properties.Item(ProjectItemProperty.CustomToolTemplate));
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task TemplatePropertyGetsValueOfTemplateMetadata()
+        public async Task TemplatePropertyGetsValueOfTemplateMetadataAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                const string TemplateFileName = "Test.tt";
-                ProjectItem projectItem = this.CreateTestProjectItem(TextFileItemTemplate);
-                projectItem.SetItemAttribute(ItemMetadata.Template, TemplateFileName);
-                Assert.AreEqual(TemplateFileName, projectItem.Properties.Item(ProjectItemProperty.CustomToolTemplate).Value);
-            });            
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            const string TemplateFileName = "Test.tt";
+            ProjectItem projectItem = this.CreateTestProjectItem(TextFileItemTemplate);
+            projectItem.SetItemAttribute(ItemMetadata.Template, TemplateFileName);
+            Assert.AreEqual(TemplateFileName, projectItem.Properties.Item(ProjectItemProperty.CustomToolTemplate).Value);
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task TemplatePropertySetsValueOfTemplateMetadata()
+        public async Task TemplatePropertySetsValueOfTemplateMetadataAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
-                ProjectItem templateItem = this.CreateTestProjectItem(TextFileItemTemplate);
-                inputItem.Properties.Item(ProjectItemProperty.CustomToolTemplate).Value = templateItem.FileNames[1];
-                Assert.AreEqual(templateItem.FileNames[1], inputItem.GetItemAttribute(ItemMetadata.Template));
-            });                        
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
+            ProjectItem templateItem = this.CreateTestProjectItem(TextFileItemTemplate);
+            inputItem.Properties.Item(ProjectItemProperty.CustomToolTemplate).Value = templateItem.FileNames[1];
+            Assert.AreEqual(templateItem.FileNames[1], inputItem.GetItemAttribute(ItemMetadata.Template));
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task TemplatePropertyDoesNotConvertRelativePathsToFull()
+        public async Task TemplatePropertyDoesNotConvertRelativePathsToFullAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
-                ProjectItem templateItem = this.CreateTestProjectItem(TextFileItemTemplate);
-                string templateFileName = Path.GetFileName(templateItem.FileNames[1]);
-                inputItem.Properties.Item(ProjectItemProperty.CustomToolTemplate).Value = templateFileName;
-                Assert.AreEqual(templateFileName, inputItem.GetItemAttribute(ItemMetadata.Template));
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
+            ProjectItem templateItem = this.CreateTestProjectItem(TextFileItemTemplate);
+            string templateFileName = Path.GetFileName(templateItem.FileNames[1]);
+            inputItem.Properties.Item(ProjectItemProperty.CustomToolTemplate).Value = templateFileName;
+            Assert.AreEqual(templateFileName, inputItem.GetItemAttribute(ItemMetadata.Template));
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task TemplatePropertyChangesCustomToolToTemplatedFileGeneratorWhenItIsNotSpecified()
+        public async Task TemplatePropertyChangesCustomToolToTemplatedFileGeneratorWhenItIsNotSpecifiedAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
-                ProjectItem templateItem = this.CreateTestProjectItem(TextFileItemTemplate);
-                inputItem.Properties.Item(ProjectItemProperty.CustomToolTemplate).Value = templateItem.FileNames[1];
-                Assert.AreEqual(TemplatedFileGenerator.Name, inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value);
-            });            
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
+            ProjectItem templateItem = this.CreateTestProjectItem(TextFileItemTemplate);
+            inputItem.Properties.Item(ProjectItemProperty.CustomToolTemplate).Value = templateItem.FileNames[1];
+            Assert.AreEqual(TemplatedFileGenerator.Name, inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value);
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task TemplatePropertyThrowsExceptionWhenCustomToolIsIncompatible()
+        public async Task TemplatePropertyThrowsExceptionWhenCustomToolIsIncompatibleAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
+            inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = "TextTemplatingFileGenerator";
+            try
             {
-                ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
-                inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = "TextTemplatingFileGenerator";
-                try
-                {
-                    inputItem.Properties.Item(ProjectItemProperty.CustomToolTemplate).Value = "Test.tt";
-                    Assert.Fail();
-                }
-                catch (Exception e)
-                {
-                    StringAssert.Contains(e.Message, TemplatedFileGenerator.Name);
-                }
-            });
+                inputItem.Properties.Item(ProjectItemProperty.CustomToolTemplate).Value = "Test.tt";
+                Assert.Fail();
+            }
+            catch (Exception e)
+            {
+                StringAssert.Contains(e.Message, TemplatedFileGenerator.Name);
+            }
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task TemplatePropertyThrowsExceptionWhenTemplateCannotBeResolved()
+        public async Task TemplatePropertyThrowsExceptionWhenTemplateCannotBeResolvedAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            string nonExistentTemplateFile = Path.ChangeExtension(Path.GetRandomFileName(), ".tt");
+            ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
+            try
             {
-                string nonExistentTemplateFile = Path.ChangeExtension(Path.GetRandomFileName(), ".tt");
-                ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
-                try
-                {
-                    inputItem.Properties.Item(ProjectItemProperty.CustomToolTemplate).Value = nonExistentTemplateFile;
-                    Assert.Fail();
-                }
-                catch (Exception e)
-                {
-                    StringAssert.Contains(e.Message, nonExistentTemplateFile);
-                    Assert.AreEqual(string.Empty, inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value);
-                }
-            });            
+                inputItem.Properties.Item(ProjectItemProperty.CustomToolTemplate).Value = nonExistentTemplateFile;
+                Assert.Fail();
+            }
+            catch (Exception e)
+            {
+                StringAssert.Contains(e.Message, nonExistentTemplateFile);
+                Assert.AreEqual(string.Empty, inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value);
+            }
         }
     }
 }

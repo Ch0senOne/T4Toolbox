@@ -10,6 +10,7 @@ namespace T4Toolbox.VisualStudio
     using System.IO;
     using System.Runtime.InteropServices;
     using System.Text;
+    using Microsoft;
     using Microsoft.VisualStudio;
     using Microsoft.VisualStudio.Designer.Interfaces;
     using Microsoft.VisualStudio.Shell.Interop;
@@ -92,6 +93,7 @@ namespace T4Toolbox.VisualStudio
             }
 
             var templateLocator = (TemplateLocator)this.GlobalServiceProvider.GetService(typeof(TemplateLocator));
+            Assumes.Present(templateLocator);
             if (!templateLocator.LocateTemplate(inputFileName, ref templateFileName))
             {
                 this.LogError(inputFileName, "Template '{0}' could not be found.", templateFileName);
@@ -126,6 +128,7 @@ namespace T4Toolbox.VisualStudio
                 // Save name of the script file in the <Template> metadata item of the project item and refresh the Properties window
                 ErrorHandler.ThrowOnFailure(propertyStorage.SetItemAttribute(inputFileId, ItemMetadata.Template, lastGenOutputFileName));
                 var propertyBrowser = (IVSMDPropertyBrowser)this.GlobalServiceProvider.GetService(typeof(SVSMDPropertyBrowser));
+                Assumes.Present(propertyBrowser);
                 propertyBrowser.Refresh();
 
                 return lastGenOutputFileName;

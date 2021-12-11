@@ -6,6 +6,7 @@ namespace T4Toolbox.VisualStudio
 {
     using System.Globalization;
     using EnvDTE;
+    using Microsoft;
     using Microsoft.VisualStudio;
     using Microsoft.VisualStudio.OLE.Interop;
     using Microsoft.VisualStudio.Shell;
@@ -21,7 +22,6 @@ namespace T4Toolbox.VisualStudio
             using (var serviceProvider = new ServiceProvider((IServiceProvider)project.DTE))
             {
                 var solution = (IVsSolution)serviceProvider.GetService(typeof(SVsSolution));
-
                 IVsHierarchy hierarchy;
                 ErrorHandler.ThrowOnFailure(solution.GetProjectOfUniqueName(project.UniqueName, out hierarchy));
 

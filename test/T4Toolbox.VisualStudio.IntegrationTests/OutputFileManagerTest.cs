@@ -12,6 +12,7 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
     using System.Windows.Threading;
     using EnvDTE;
     using EnvDTE80;
+    using Microsoft.VisualStudio.Shell;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Microsoft.VisualStudio.TextTemplating;
     using Microsoft.VisualStudio.TextTemplating.VSHost;
@@ -35,53 +36,47 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
         private TextTemplatingCallback templatingCallback;
 
         [TestInitialize]
-        public void TestInitialize()
+        public async Task TestInitializeAsync()
         {
-            UIThreadDispatcher.Invoke(delegate
-            {
-                this.templatingService = (ITextTemplating)ServiceProvider.GetService(typeof(STextTemplating));
-                this.templatingHost = (ITextTemplatingEngineHost)this.templatingService;
-                this.provider = (ITransformationContextProvider)ServiceProvider.GetService(typeof(ITransformationContextProvider));
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.templatingService = (ITextTemplating)ServiceProvider.GetService(typeof(STextTemplating));
+            this.templatingHost = (ITextTemplatingEngineHost)this.templatingService;
+            this.provider = (ITransformationContextProvider)ServiceProvider.GetService(typeof(ITransformationContextProvider));
 
-                this.project = this.CreateTestProject();
-                this.folder = this.project.ProjectItems.AddFolder(Path.GetRandomFileName());
-                this.input = this.CreateTestProjectItem(this.folder.ProjectItems, TextFileItemTemplate);
+            this.project = this.CreateTestProject();
+            this.folder = this.project.ProjectItems.AddFolder(Path.GetRandomFileName());
+            this.input = this.CreateTestProjectItem(this.folder.ProjectItems, TextFileItemTemplate);
 
-                this.output = new OutputFile { File = Path.GetRandomFileName() + ".txt" };
-                this.output.Content.Append(TestText);
+            this.output = new OutputFile { File = Path.GetRandomFileName() + ".txt" };
+            this.output.Content.Append(TestText);
 
-                this.SimulateTransformation();
-            });
+            this.SimulateTransformation();
         }
 
         #region Output.File
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesCreatesNewProjectItemWithSpecifiedFile()
+        public async Task UpdateOutputFilesCreatesNewProjectItemWithSpecifiedFileAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
-                
-                ProjectItem outputItem = this.input.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.File);
-                Assert.AreEqual(this.output.Content.ToString(), File.ReadAllText(outputItem.FileNames[1]));
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
+
+            ProjectItem outputItem = this.input.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.File);
+            Assert.AreEqual(this.output.Content.ToString(), File.ReadAllText(outputItem.FileNames[1]));
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesDeletesPreviouslyCreatedFileThatWasNotRecreated()
+        public async Task UpdateOutputFilesDeletesPreviouslyCreatedFileThatWasNotRecreatedAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new OutputFile[0]);
-                await this.SimulateCustomTool();
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new OutputFile[0]);
+            await this.SimulateCustomToolAsync();
 
-                Assert.IsFalse(this.input.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
-            });
+            Assert.IsFalse(this.input.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
         }
 
         #endregion
@@ -90,269 +85,238 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
         //// Note: Without Output.Project, Output.File and Output.Directory are relative to input file location.
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesCreatesNewProjectItemInDirectorySpecifiedAsPathRelativeToInputFile()
+        public async Task UpdateOutputFilesCreatesNewProjectItemInDirectorySpecifiedAsPathRelativeToInputFileAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.Directory = Path.GetRandomFileName();                
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.Directory = Path.GetRandomFileName();
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                ProjectItem outputFolder = this.folder.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.Directory);
-                Assert.IsTrue(outputFolder.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
-            });
+            ProjectItem outputFolder = this.folder.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.Directory);
+            Assert.IsTrue(outputFolder.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesCreatesNewProjectItemInDirectorySpecifiedAsAbsolutePath()
+        public async Task UpdateOutputFilesCreatesNewProjectItemInDirectorySpecifiedAsAbsolutePathAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                string folderName = Path.GetRandomFileName();
-                this.output.Directory = Path.Combine(Path.GetDirectoryName(this.project.FullName), folderName);          
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            string folderName = Path.GetRandomFileName();
+            this.output.Directory = Path.Combine(Path.GetDirectoryName(this.project.FullName), folderName);
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                ProjectItem outputFolder = this.project.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == folderName);
-                Assert.IsTrue(outputFolder.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
-            });
+            ProjectItem outputFolder = this.project.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == folderName);
+            Assert.IsTrue(outputFolder.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
         }
 
         [TestMethod, ExpectedException(typeof(TransformationException))]
         [DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesThrowsTransformationExceptionWhenAbsoluteDirectoryIsOutsideOfProject()
+        public async Task UpdateOutputFilesThrowsTransformationExceptionWhenAbsoluteDirectoryIsOutsideOfProjectAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                this.output.Directory = Directory.GetParent(this.project.FullName).Parent.FullName;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.Directory = Directory.GetParent(this.project.FullName).Parent.FullName;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
         }
 
         [TestMethod, ExpectedException(typeof(TransformationException))]
         [DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesThrowsTransformationExceptionWhenRelativeDirectoryIsOutsideOfProject()
+        public async Task UpdateOutputFilesThrowsTransformationExceptionWhenRelativeDirectoryIsOutsideOfProjectAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                this.output.Directory = @"..\..";
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.Directory = @"..\..";
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesDeletesPreviouslyCreatedDirectoryWhereFilesWereNotRecreated()
+        public async Task UpdateOutputFilesDeletesPreviouslyCreatedDirectoryWhereFilesWereNotRecreatedAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.Directory = Path.GetRandomFileName();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.Directory = Path.GetRandomFileName();
 
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new OutputFile[0]);
-                await this.SimulateCustomTool();
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new OutputFile[0]);
+            await this.SimulateCustomToolAsync();
 
-                Assert.IsFalse(this.folder.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.Directory));
-            });
+            Assert.IsFalse(this.folder.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.Directory));
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesMovesPreviouslyCreatedItemToTheSpecifiedDirectory()
+        public async Task UpdateOutputFilesMovesPreviouslyCreatedItemToTheSpecifiedDirectoryAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                // Create output file nested under the input file
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-                // Now regenerate the file, this time specifying Directory
-                this.output.Directory = Path.GetDirectoryName(this.input.FileNames[1]);
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            // Create output file nested under the input file
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                // The output file path hasn't changed, however, it should be moved from the input's collection to the folder's collection
-                Assert.IsTrue(this.folder.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
-            });
+            // Now regenerate the file, this time specifying Directory
+            this.output.Directory = Path.GetDirectoryName(this.input.FileNames[1]);
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
+
+            // The output file path hasn't changed, however, it should be moved from the input's collection to the folder's collection
+            Assert.IsTrue(this.folder.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
         }
 
         #endregion
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesStoresRelativePathsOfGeneratedFiles()
+        public async Task UpdateOutputFilesStoresRelativePathsOfGeneratedFilesAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.Directory = Path.GetRandomFileName();
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.Directory = Path.GetRandomFileName();
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                string lastGenOutput = this.input.GetItemAttribute(ItemMetadata.LastOutputs);
-                Assert.AreEqual(this.output.Path, lastGenOutput.TrimStart('.', '\\'));
-                Assert.IsFalse(Path.IsPathRooted(lastGenOutput));
-            });
+            string lastGenOutput = this.input.GetItemAttribute(ItemMetadata.LastOutputs);
+            Assert.AreEqual(this.output.Path, lastGenOutput.TrimStart('.', '\\'));
+            Assert.IsFalse(Path.IsPathRooted(lastGenOutput));
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesDoesNotStoreNameOfDefaultOutputTwice()
+        public async Task UpdateOutputFilesDoesNotStoreNameOfDefaultOutputTwiceAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.File = string.Empty;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
-                Assert.AreEqual(string.Empty, this.input.GetItemAttribute(ItemMetadata.LastOutputs));
-            });            
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.File = string.Empty;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
+            Assert.AreEqual(string.Empty, this.input.GetItemAttribute(ItemMetadata.LastOutputs));
         }
 
         #region Output.Project
         //// Note: With Output.Project specified, Output.File and Output.Directory are relative to the target project location.
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesCreatesNewProjectItemInProjectSpecifiedAsAbsolutePath()
+        public async Task UpdateOutputFilesCreatesNewProjectItemInProjectSpecifiedAsAbsolutePathAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.Project = this.project.FullName;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
-                Assert.IsTrue(this.project.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.Project = this.project.FullName;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
+            Assert.IsTrue(this.project.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesCreatesNewProjectItemInProjectSpecifiedAsPathRelativeToInputFile()
+        public async Task UpdateOutputFilesCreatesNewProjectItemInProjectSpecifiedAsPathRelativeToInputFileAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.Project = FileMethods.GetRelativePath(this.input.FileNames[1], this.project.FullName);
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
-                Assert.IsTrue(this.project.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.Project = FileMethods.GetRelativePath(this.input.FileNames[1], this.project.FullName);
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
+            Assert.IsTrue(this.project.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
         }
         
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesCreatesNewProjectItemInAbsoluteDirectoryOfTargetProject()
+        public async Task UpdateOutputFilesCreatesNewProjectItemInAbsoluteDirectoryOfTargetProjectAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                string directoryName = Path.GetRandomFileName();
-                this.output.Directory = Path.Combine(Path.GetDirectoryName(this.project.FullName), directoryName);
-                this.output.Project = this.project.FullName;
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            string directoryName = Path.GetRandomFileName();
+            this.output.Directory = Path.Combine(Path.GetDirectoryName(this.project.FullName), directoryName);
+            this.output.Project = this.project.FullName;
 
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                ProjectItem outputFolder = this.project.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == directoryName);
-                Assert.IsTrue(outputFolder.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
-            });
+            ProjectItem outputFolder = this.project.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == directoryName);
+            Assert.IsTrue(outputFolder.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesCreatesNewProjectItemInRelativeDirectoryOfTargetProject()
+        public async Task UpdateOutputFilesCreatesNewProjectItemInRelativeDirectoryOfTargetProjectAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.Directory = Path.GetRandomFileName();
-                this.output.Project = this.project.FullName;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.Directory = Path.GetRandomFileName();
+            this.output.Project = this.project.FullName;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                ProjectItem outputFolder = this.project.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.Directory);
-                Assert.IsTrue(outputFolder.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
-            });
+            ProjectItem outputFolder = this.project.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.Directory);
+            Assert.IsTrue(outputFolder.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
         }
 
         [TestMethod, ExpectedException(typeof(TransformationException))]
         [DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesThrowsTransformationExceptionWhenAbsoluteDirectoryIsOutsideOfTargetProject()
+        public async Task UpdateOutputFilesThrowsTransformationExceptionWhenAbsoluteDirectoryIsOutsideOfTargetProjectAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                this.output.Directory = Directory.GetParent(this.project.FullName).Parent.FullName;
-                this.output.Project = this.project.FullName;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.Directory = Directory.GetParent(this.project.FullName).Parent.FullName;
+            this.output.Project = this.project.FullName;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
         }
 
         [TestMethod, ExpectedException(typeof(TransformationException))]
         [DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesThrowsTransformationExceptionWhenRelativeDirectoryIsOutsideOfTargetProject()
+        public async Task UpdateOutputFilesThrowsTransformationExceptionWhenRelativeDirectoryIsOutsideOfTargetProjectAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                this.output.Directory = "..";
-                this.output.Project = this.project.FullName;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.Directory = "..";
+            this.output.Project = this.project.FullName;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
         }
 
         [TestMethod, ExpectedException(typeof(TransformationException))]
         [DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesThrowsTransformationExceptionWhenSpecifiedProjectIsNotInTheSolution()
+        public async Task UpdateOutputFilesThrowsTransformationExceptionWhenSpecifiedProjectIsNotInTheSolutionAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                this.output.Project = "Invalid.proj";
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.Project = "Invalid.proj";
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesCreatesNewProjectItemInTargetProjectLocatedInSolutionFolder()
+        public async Task UpdateOutputFilesCreatesNewProjectItemInTargetProjectLocatedInSolutionFolderAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                // Create a new solution folder
-                Project solutionFolderProject = Solution.AddSolutionFolder(Path.GetRandomFileName());
-                var solutionFolder = (SolutionFolder)solutionFolderProject.Object;
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-                // Create a new project in the solution folder
-                string projectTemplate = Solution.GetProjectTemplate(this.TargetProject.Template, this.TargetProject.Language);
-                string projectName = Path.GetRandomFileName();
-                string projectFolder = Path.Combine(SolutionDirectory, projectName);
-                solutionFolder.AddFromTemplate(projectTemplate, projectFolder, projectName);
-                Project project = solutionFolderProject.ProjectItems.Item(1).SubProject;
+            // Create a new solution folder
+            Project solutionFolderProject = Solution.AddSolutionFolder(Path.GetRandomFileName());
+            var solutionFolder = (SolutionFolder)solutionFolderProject.Object;
 
-                // Generate output file in the new project
-                this.output.Project = project.FullName;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
-                Assert.IsTrue(project.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
-            });
+            // Create a new project in the solution folder
+            string projectTemplate = Solution.GetProjectTemplate(this.TargetProject.Template, this.TargetProject.Language);
+            string projectName = Path.GetRandomFileName();
+            string projectFolder = Path.Combine(SolutionDirectory, projectName);
+            solutionFolder.AddFromTemplate(projectTemplate, projectFolder, projectName);
+            Project project = solutionFolderProject.ProjectItems.Item(1).SubProject;
+
+            // Generate output file in the new project
+            this.output.Project = project.FullName;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
+            Assert.IsTrue(project.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
         }
 
         [Ignore] // It appears in Visual Studio 2013 behavior of Solution.AddFromTemplate changed to prevent creation of multiple projects in the same folder
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesMovesPreviouslyCreatedItemToTargetProject()
+        public async Task UpdateOutputFilesMovesPreviouslyCreatedItemToTargetProjectAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                // Generate output file in the source project
-                Project sourceProject = this.input.ContainingProject;
-                this.output.Project = sourceProject.FullName;
-                this.output.Directory = this.folder.FileNames[1];
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-                // Create a new project in the same directory
-                string projectTemplate = Solution.GetProjectTemplate(this.TargetProject.Template, this.TargetProject.Language);
-                string projectName = Path.GetRandomFileName();
-                string projectFolder = Path.GetDirectoryName(sourceProject.FullName);
-                Solution.AddFromTemplate(projectTemplate, projectFolder, projectName);
-                Project targetProject = Solution.Projects.Cast<Project>().Single(project => project.Name == projectName);
+            // Generate output file in the source project
+            Project sourceProject = this.input.ContainingProject;
+            this.output.Project = sourceProject.FullName;
+            this.output.Directory = this.folder.FileNames[1];
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                // Re-generate output in the target project
-                this.output.Project = targetProject.FullName;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            // Create a new project in the same directory
+            string projectTemplate = Solution.GetProjectTemplate(this.TargetProject.Template, this.TargetProject.Language);
+            string projectName = Path.GetRandomFileName();
+            string projectFolder = Path.GetDirectoryName(sourceProject.FullName);
+            Solution.AddFromTemplate(projectTemplate, projectFolder, projectName);
+            Project targetProject = Solution.Projects.Cast<Project>().Single(project => project.Name == projectName);
 
-                // Verify that the output file was moved from the source project to the target project
-                Assert.IsFalse(this.folder.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
-                ProjectItem targetFolder = targetProject.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.folder.Name);
-                Assert.IsTrue(targetFolder.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
-            });
+            // Re-generate output in the target project
+            this.output.Project = targetProject.FullName;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
+
+            // Verify that the output file was moved from the source project to the target project
+            Assert.IsFalse(this.folder.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
+            ProjectItem targetFolder = targetProject.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.folder.Name);
+            Assert.IsTrue(targetFolder.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
         }
 
         #endregion
@@ -360,42 +324,36 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
         #region Output.ItemType
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesCreatesProjectItemWithSpecifiedItemType()
+        public async Task UpdateOutputFilesCreatesProjectItemWithSpecifiedItemTypeAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.ItemType = ItemType.EmbeddedResource;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.ItemType = ItemType.EmbeddedResource;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                ProjectItem outputItem = this.input.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.File);
-                Assert.AreEqual(this.output.ItemType, outputItem.Properties.Item(ProjectItemProperty.ItemType).Value);
-            });
+            ProjectItem outputItem = this.input.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.File);
+            Assert.AreEqual(this.output.ItemType, outputItem.Properties.Item(ProjectItemProperty.ItemType).Value);
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesConfiguresDefaultOutputItemWithSpecifiedItemType()
+        public async Task UpdateOutputFilesConfiguresDefaultOutputItemWithSpecifiedItemTypeAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.File = string.Empty;
-                this.output.ItemType = ItemType.Content;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.File = string.Empty;
+            this.output.ItemType = ItemType.Content;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
 
-                ProjectItem outputItem = await this.SimulateCustomTool();
-                Assert.AreEqual(this.output.ItemType, outputItem.Properties.Item(ProjectItemProperty.ItemType).Value);
-            });
+            ProjectItem outputItem = await this.SimulateCustomToolAsync();
+            Assert.AreEqual(this.output.ItemType, outputItem.Properties.Item(ProjectItemProperty.ItemType).Value);
         }
 
         [TestMethod, ExpectedException(typeof(TransformationException))]
         [DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesThrowsTransformationExceptionWhenSpecifiedItemTypeIsNotAvailable()
+        public async Task UpdateOutputFilesThrowsTransformationExceptionWhenSpecifiedItemTypeIsNotAvailableAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                this.output.ItemType = "InvalidItemType";
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.ItemType = "InvalidItemType";
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
         }
 
         #endregion
@@ -403,31 +361,27 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
         #region Output.CopyToOutputDirectory
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesCreatesProjectItemWithSpecifiedCopyToOutputDirectory()
+        public async Task UpdateOutputFilesCreatesProjectItemWithSpecifiedCopyToOutputDirectoryAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.CopyToOutputDirectory = CopyToOutputDirectory.CopyAlways;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.CopyToOutputDirectory = CopyToOutputDirectory.CopyAlways;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                ProjectItem outputItem = this.input.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.File);
-                Assert.AreEqual((uint)this.output.CopyToOutputDirectory, outputItem.Properties.Item(ProjectItemProperty.CopyToOutputDirectory).Value);
-            });
+            ProjectItem outputItem = this.input.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.File);
+            Assert.AreEqual((uint)this.output.CopyToOutputDirectory, outputItem.Properties.Item(ProjectItemProperty.CopyToOutputDirectory).Value);
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesConfiguresDefaultOutputItemWithSpecifiedCopyToOutputDirectory()
+        public async Task UpdateOutputFilesConfiguresDefaultOutputItemWithSpecifiedCopyToOutputDirectoryAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.File = string.Empty;
-                this.output.CopyToOutputDirectory = CopyToOutputDirectory.CopyAlways;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.File = string.Empty;
+            this.output.CopyToOutputDirectory = CopyToOutputDirectory.CopyAlways;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
 
-                ProjectItem outputItem = await this.SimulateCustomTool();
-                Assert.AreEqual((uint)this.output.CopyToOutputDirectory, outputItem.Properties.Item(ProjectItemProperty.CopyToOutputDirectory).Value);
-            });
+            ProjectItem outputItem = await this.SimulateCustomToolAsync();
+            Assert.AreEqual((uint)this.output.CopyToOutputDirectory, outputItem.Properties.Item(ProjectItemProperty.CopyToOutputDirectory).Value);
         }
 
         #endregion
@@ -435,31 +389,27 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
         #region Output.CustomTool
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesCreatesProjectItemWithSpecifiedCustomTool()
+        public async Task UpdateOutputFilesCreatesProjectItemWithSpecifiedCustomToolAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.CustomTool = "TextTemplatingFilePreprocessor";
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.CustomTool = "TextTemplatingFilePreprocessor";
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                ProjectItem outputItem = this.input.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.File);
-                Assert.AreEqual(this.output.CustomTool, outputItem.Properties.Item(ProjectItemProperty.CustomTool).Value);
-            });
+            ProjectItem outputItem = this.input.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.File);
+            Assert.AreEqual(this.output.CustomTool, outputItem.Properties.Item(ProjectItemProperty.CustomTool).Value);
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesConfiguresDefaultOutputItemWithSpecifiedCustomTool()
+        public async Task UpdateOutputFilesConfiguresDefaultOutputItemWithSpecifiedCustomToolAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.File = string.Empty;
-                this.output.CustomTool = "TextTemplatingFilePreprocessor";
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.File = string.Empty;
+            this.output.CustomTool = "TextTemplatingFilePreprocessor";
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
 
-                ProjectItem outputItem = await this.SimulateCustomTool();
-                Assert.AreEqual(this.output.CustomTool, outputItem.Properties.Item(ProjectItemProperty.CustomTool).Value);
-            });
+            ProjectItem outputItem = await this.SimulateCustomToolAsync();
+            Assert.AreEqual(this.output.CustomTool, outputItem.Properties.Item(ProjectItemProperty.CustomTool).Value);
         }
 
         #endregion 
@@ -467,31 +417,27 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
         #region Output.CustomToolNamespace
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesCreatesProjectItemWithSpecifiedCustomToolNamespace()
+        public async Task UpdateOutputFilesCreatesProjectItemWithSpecifiedCustomToolNamespaceAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.CustomToolNamespace = "T4Toolbox";
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.CustomToolNamespace = "T4Toolbox";
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                ProjectItem outputItem = this.input.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.File);
-                Assert.AreEqual(this.output.CustomToolNamespace, outputItem.Properties.Item(ProjectItemProperty.CustomToolNamespace).Value);
-            });
+            ProjectItem outputItem = this.input.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.File);
+            Assert.AreEqual(this.output.CustomToolNamespace, outputItem.Properties.Item(ProjectItemProperty.CustomToolNamespace).Value);
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesConfiguresDefaultOutputItemWithSpecifiedCustomToolNamespace()
+        public async Task UpdateOutputFilesConfiguresDefaultOutputItemWithSpecifiedCustomToolNamespaceAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.File = string.Empty;
-                this.output.CustomToolNamespace = "T4Toolbox";
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.File = string.Empty;
+            this.output.CustomToolNamespace = "T4Toolbox";
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
 
-                ProjectItem outputItem = await this.SimulateCustomTool();
-                Assert.AreEqual(this.output.CustomToolNamespace, outputItem.Properties.Item(ProjectItemProperty.CustomToolNamespace).Value);
-            });
+            ProjectItem outputItem = await this.SimulateCustomToolAsync();
+            Assert.AreEqual(this.output.CustomToolNamespace, outputItem.Properties.Item(ProjectItemProperty.CustomToolNamespace).Value);
         }
 
         #endregion
@@ -499,47 +445,42 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
         #region Output.Encoding
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesCreatesProjectItemWithSpecifiedEncoding()
+        public async Task UpdateOutputFilesCreatesProjectItemWithSpecifiedEncodingAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.Encoding = Encoding.UTF32;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.Encoding = Encoding.UTF32;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                ProjectItem outputItem = this.input.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.File);
-                byte[] preamble = this.output.Encoding.GetPreamble();
-                byte[] contents = File.ReadAllBytes(outputItem.FileNames[1]);
-                Assert.IsTrue(preamble.Length > 0);
-                CollectionAssert.AreEqual(preamble, contents.Take(preamble.Length).ToArray());
-            });
+            ProjectItem outputItem = this.input.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.File);
+            byte[] preamble = this.output.Encoding.GetPreamble();
+            byte[] contents = File.ReadAllBytes(outputItem.FileNames[1]);
+            Assert.IsTrue(preamble.Length > 0);
+            CollectionAssert.AreEqual(preamble, contents.Take(preamble.Length).ToArray());
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesChangesDefaultOutputItemToSpecifiedEncoding()
+        public async Task UpdateOutputFilesChangesDefaultOutputItemToSpecifiedEncodingAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                this.output.File = string.Empty;
-                this.output.Encoding = Encoding.UTF32;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                Assert.AreEqual(this.output.Encoding, this.templatingCallback.OutputEncoding);
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.File = string.Empty;
+            this.output.Encoding = Encoding.UTF32;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            Assert.AreEqual(this.output.Encoding, this.templatingCallback.OutputEncoding);
         }
 
         [TestMethod, ExpectedException(typeof(TransformationException))]
         [DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesThrowsTransformationExceptionWhenEncodingWasSetByOutputDirectoryAndSpecified()
+        public async Task UpdateOutputFilesThrowsTransformationExceptionWhenEncodingWasSetByOutputDirectoryAndSpecifiedAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                // Default output encoding was set by an <#@ output #> directive
-                this.templatingHost.SetOutputEncoding(Encoding.ASCII, true);
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-                this.output.File = string.Empty;
-                this.output.Encoding = Encoding.UTF32;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-            });
+            // Default output encoding was set by an <#@ output #> directive
+            this.templatingHost.SetOutputEncoding(Encoding.ASCII, true);
+
+            this.output.File = string.Empty;
+            this.output.Encoding = Encoding.UTF32;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
         }
 
         #endregion
@@ -547,50 +488,44 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
         #region Output.References
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesConfiguresReferencesOfOutputItem()
+        public async Task UpdateOutputFilesConfiguresReferencesOfOutputItemAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.References.Add("System.Web");
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.References.Add("System.Web");
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                var project = (VSProject)this.project.Object;
-                Reference reference = project.References.Find(this.output.References.Single());
-                Assert.IsNotNull(reference);
-                reference.Remove();
-            });
+            var project = (VSProject)this.project.Object;
+            Reference reference = project.References.Find(this.output.References.Single());
+            Assert.IsNotNull(reference);
+            reference.Remove();
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesConfiguresReferencesOfDefaultOutputItem()
+        public async Task UpdateOutputFilesConfiguresReferencesOfDefaultOutputItemAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.File = string.Empty;
-                this.output.References.Add("System.Web");
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.File = string.Empty;
+            this.output.References.Add("System.Web");
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                var project = (VSProject)this.project.Object;
-                Reference reference = project.References.Find(this.output.References.Single());
-                Assert.IsNotNull(reference);
-                reference.Remove();
-            });
+            var project = (VSProject)this.project.Object;
+            Reference reference = project.References.Find(this.output.References.Single());
+            Assert.IsNotNull(reference);
+            reference.Remove();
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesReportsErrorWhenReferenceCannotBeAdded()
+        public async Task UpdateOutputFilesReportsErrorWhenReferenceCannotBeAddedAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.References.Add("InvalidAssemblyName");
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.References.Add("InvalidAssemblyName");
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                ErrorItem error = IntegrationTest.ErrorItems.Single(item => item.FileName == this.input.FileNames[1]);
-                StringAssert.Contains(error.Description, this.output.References.Single());
-            });
+            ErrorItem error = IntegrationTest.ErrorItems.Single(item => item.FileName == this.input.FileNames[1]);
+            StringAssert.Contains(error.Description, this.output.References.Single());
         }
 
         #endregion
@@ -598,31 +533,27 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
         #region Output.Metadata
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesCreatesProjectItemWithSpecifiedMetadata()
+        public async Task UpdateOutputFilesCreatesProjectItemWithSpecifiedMetadataAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.Metadata["Marco"] = "Polo";
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.Metadata["Marco"] = "Polo";
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                ProjectItem outputItem = this.input.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.File);
-                Assert.AreEqual("Polo", outputItem.GetItemAttribute("Marco"));
-            });
+            ProjectItem outputItem = this.input.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.File);
+            Assert.AreEqual("Polo", outputItem.GetItemAttribute("Marco"));
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesCreatesDefaultOutputItemWithSpecifiedMetadata()
+        public async Task UpdateOutputFilesCreatesDefaultOutputItemWithSpecifiedMetadataAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.File = string.Empty;
-                this.output.Metadata["Marco"] = "Polo";
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.File = string.Empty;
+            this.output.Metadata["Marco"] = "Polo";
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
 
-                ProjectItem outputItem = await this.SimulateCustomTool();
-                Assert.AreEqual("Polo", outputItem.GetItemAttribute("Marco"));
-            });
+            ProjectItem outputItem = await this.SimulateCustomToolAsync();
+            Assert.AreEqual("Polo", outputItem.GetItemAttribute("Marco"));
         }
 
         #endregion
@@ -630,37 +561,33 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
         #region Output.PreserveExistingFile
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesDoesNotOverwriteExistingFileWhenPreserveExistingFileIsTrue()
+        public async Task UpdateOutputFilesDoesNotOverwriteExistingFileWhenPreserveExistingFileIsTrueAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                const string ExistingContent = "Existing Content";
-                string outputFilePath = Path.Combine(Path.GetDirectoryName(this.input.FileNames[1]), this.output.File); 
-                File.WriteAllText(outputFilePath, ExistingContent);
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            const string ExistingContent = "Existing Content";
+            string outputFilePath = Path.Combine(Path.GetDirectoryName(this.input.FileNames[1]), this.output.File);
+            File.WriteAllText(outputFilePath, ExistingContent);
 
-                this.output.PreserveExistingFile = true;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            this.output.PreserveExistingFile = true;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                ProjectItem outputItem = this.input.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.File);
-                Assert.AreEqual(ExistingContent, File.ReadAllText(outputItem.FileNames[1]));
-            });
+            ProjectItem outputItem = this.input.ProjectItems.Cast<ProjectItem>().Single(item => item.Name == this.output.File);
+            Assert.AreEqual(ExistingContent, File.ReadAllText(outputItem.FileNames[1]));
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesDoesNotDeletePreviouslyCreatedFileWhenPreserveExistingFileIsTrue()
+        public async Task UpdateOutputFilesDoesNotDeletePreviouslyCreatedFileWhenPreserveExistingFileIsTrueAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.PreserveExistingFile = true;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.PreserveExistingFile = true;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
 
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new OutputFile[0]);
-                await this.SimulateCustomTool();
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new OutputFile[0]);
+            await this.SimulateCustomToolAsync();
 
-                Assert.IsTrue(this.input.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
-            });
+            Assert.IsTrue(this.input.ProjectItems.Cast<ProjectItem>().Any(item => item.Name == this.output.File));
         }
 
         #endregion
@@ -668,58 +595,54 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
         #region Default Output File
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesConfiguresDefaultOutputCreatedAfterTransformation()
+        public async Task UpdateOutputFilesConfiguresDefaultOutputCreatedAfterTransformationAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.File = string.Empty;
-                this.output.ItemType = ItemType.Content;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                ProjectItem outputItem = await this.SimulateCustomTool();
-                Assert.AreEqual(this.output.ItemType, outputItem.Properties.Item(ProjectItemProperty.ItemType).Value);
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.File = string.Empty;
+            this.output.ItemType = ItemType.Content;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            ProjectItem outputItem = await this.SimulateCustomToolAsync();
+            Assert.AreEqual(this.output.ItemType, outputItem.Properties.Item(ProjectItemProperty.ItemType).Value);
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesConfiguresDefaultOutputCreatedBeforeTransformation()
+        public async Task UpdateOutputFilesConfiguresDefaultOutputCreatedBeforeTransformationAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                // Default output was created by previous transformation
-                ProjectItem outputItem = await this.SimulateCustomTool();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-                // New transformation generates the file with the same extension
-                this.SimulateTransformation();
-                this.output.File = string.Empty;
-                this.output.ItemType = ItemType.EmbeddedResource;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            // Default output was created by previous transformation
+            ProjectItem outputItem = await this.SimulateCustomToolAsync();
 
-                // Verify that output item was configured
-                Assert.AreEqual(this.output.ItemType, outputItem.Properties.Item(ProjectItemProperty.ItemType).Value);
-            });
+            // New transformation generates the file with the same extension
+            this.SimulateTransformation();
+            this.output.File = string.Empty;
+            this.output.ItemType = ItemType.EmbeddedResource;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
+
+            // Verify that output item was configured
+            Assert.AreEqual(this.output.ItemType, outputItem.Properties.Item(ProjectItemProperty.ItemType).Value);
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesConfiguresDefaultOutputRecreatedAfterTransformation()
+        public async Task UpdateOutputFilesConfiguresDefaultOutputRecreatedAfterTransformationAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                // Default output was created by previous transformation
-                await this.SimulateCustomTool();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-                // New transformation changes extension of the default output
-                this.SimulateTransformation();
-                this.templatingHost.SetFileExtension("new");
+            // Default output was created by previous transformation
+            await this.SimulateCustomToolAsync();
 
-                this.output.File = string.Empty;
-                this.output.ItemType = ItemType.Content;
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                ProjectItem outputItem = await this.SimulateCustomTool();
+            // New transformation changes extension of the default output
+            this.SimulateTransformation();
+            this.templatingHost.SetFileExtension("new");
 
-                // Verify that output item was configured
-                Assert.AreEqual(this.output.ItemType, outputItem.Properties.Item(ProjectItemProperty.ItemType).Value);
-            });
+            this.output.File = string.Empty;
+            this.output.ItemType = ItemType.Content;
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            ProjectItem outputItem = await this.SimulateCustomToolAsync();
+
+            // Verify that output item was configured
+            Assert.AreEqual(this.output.ItemType, outputItem.Properties.Item(ProjectItemProperty.ItemType).Value);
         }
 
         #endregion
@@ -727,59 +650,54 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
         #region Empty Output Files
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesGeneratesWarningWhenAdditionalOutputFileIsEmpty() // To encourage developer to cleanup their code generator
+        public async Task UpdateOutputFilesGeneratesWarningWhenAdditionalOutputFileIsEmptyAsync() // To encourage developer to cleanup their code generator
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.Content.Clear();
-                this.output.Content.Append(WhiteSpaceText);
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
-                ErrorItem warning = ErrorItems.Single(item => item.FileName == this.input.FileNames[1]);
-                StringAssert.Contains(warning.Description, this.output.Path);
-                Assert.AreEqual(vsBuildErrorLevel.vsBuildErrorLevelMedium, warning.ErrorLevel);
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.Content.Clear();
+            this.output.Content.Append(WhiteSpaceText);
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
+            ErrorItem warning = ErrorItems.Single(item => item.FileName == this.input.FileNames[1]);
+            StringAssert.Contains(warning.Description, this.output.Path);
+            Assert.AreEqual(vsBuildErrorLevel.vsBuildErrorLevelMedium, warning.ErrorLevel);
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesDoesNotGenerateWarningWhenDefaultOutputFileIsEmpty() // Because there may be nothing developer can do about it
+        public async Task UpdateOutputFilesDoesNotGenerateWarningWhenDefaultOutputFileIsEmptyAsync() // Because there may be nothing developer can do about it
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                this.output.File = string.Empty;
-                this.output.Content.Clear();
-                this.output.Content.Append(WhiteSpaceText);
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
-                Assert.IsFalse(ErrorItems.Any(item => item.FileName == this.input.FileNames[1]));
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.output.File = string.Empty;
+            this.output.Content.Clear();
+            this.output.Content.Append(WhiteSpaceText);
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
+            Assert.IsFalse(ErrorItems.Any(item => item.FileName == this.input.FileNames[1]));
         }
 
         #endregion 
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task UpdateOutputFilesAutomaticallyReloadsOpenDocumentsFromDisk()
+        public async Task UpdateOutputFilesAutomaticallyReloadsOpenDocumentsFromDiskAsync()
         {
-            await UIThreadDispatcher.Invoke<Task>(async delegate
-            {
-                // Output file already exists and it is opened in text editor
-                string outputFilePath = Path.Combine(Path.GetDirectoryName(this.input.FileNames[1]), this.output.File);
-                ProjectItem outputItem = IntegrationTest.CreateTestProjectItemFromFile(this.input.ProjectItems, outputFilePath);
-                Window window = outputItem.Open(Constants.vsViewKindTextView);
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-                // Code generation occurs
-                this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
-                await this.SimulateCustomTool();
+            // Output file already exists and it is opened in text editor
+            string outputFilePath = Path.Combine(Path.GetDirectoryName(this.input.FileNames[1]), this.output.File);
+            ProjectItem outputItem = IntegrationTest.CreateTestProjectItemFromFile(this.input.ProjectItems, outputFilePath);
+            Window window = outputItem.Open(Constants.vsViewKindTextView);
 
-                // Verify that document text has been reloads generated document from disk
-                var textDocument = (TextDocument)window.Document.Object();
-                textDocument.Selection.StartOfDocument(Extend: true);
-                textDocument.Selection.EndOfDocument(Extend: true);
-                Assert.AreEqual(this.output.Content.ToString(), textDocument.Selection.Text);
-            });            
+            // Code generation occurs
+            this.provider.UpdateOutputFiles(this.input.FileNames[1], new[] { this.output });
+            await this.SimulateCustomToolAsync();
+
+            // Verify that document text has been reloads generated document from disk
+            var textDocument = (TextDocument)window.Document.Object();
+            textDocument.Selection.StartOfDocument(Extend: true);
+            textDocument.Selection.EndOfDocument(Extend: true);
+            Assert.AreEqual(this.output.Content.ToString(), textDocument.Selection.Text);
         }
 
-        private async Task<ProjectItem> SimulateCustomTool()
+        private async Task<ProjectItem> SimulateCustomToolAsync()
         {
             string outputFileName = Path.Combine(Path.GetDirectoryName(this.project.FullName), this.input.GetItemAttribute(ItemMetadata.LastGenOutput));
             ProjectItem outputItem = this.input.ProjectItems.Cast<ProjectItem>().SingleOrDefault(item => item.FileNames[1] == outputFileName);

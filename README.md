@@ -5,7 +5,7 @@ text templates in Visual Studio and allows you to:
 - Generate multiple output files from a single text template 
 - Automatically add output files to one or more projects and folders 
 - Automatically add or check-out generated files from source control 
-- Edit text templates in Visual Studio 2015 with syntax colorization, outlining, QuickInfo tooltips, 
+- Edit text templates in Visual Studio 2022 with syntax colorization, outlining, QuickInfo tooltips, 
 error reporting and statement completion 
 
 You can install the latest stable version of T4 Toolbox using the Extension Manager in Visual Studio or download 
@@ -17,7 +17,7 @@ To learn more, visit the [Getting Started](http://olegsych.github.io/T4Toolbox/g
 [![Build status](https://ci.appveyor.com/api/projects/status/github/olegsych/t4toolbox?branch=master&retina=true)](https://ci.appveyor.com/project/olegsych/t4toolbox/branch/master)
 
 Pre-requisites
-- [Visual Studio 2017](https://www.visualstudio.com/downloads), 
+- [Visual Studio 2022](https://www.visualstudio.com/downloads), 
   - Edition: Community
   - Toolsets:
     - .NET desktop development toolset
@@ -61,7 +61,7 @@ You can debug unit and integration tests by selecting the Debug commands in Test
 Alternatively, you can debug both generator and editor code by running it in Visual Studio. For that, set the 
 `T4Toolbox.vsix` project as the startup project in Solution Explorer and specify the following options on the 
 Debug page of the project properties.
-- Start Action / Start external program: ```C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\devenv.exe```
+- Start Action / Start external program: ```C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\devenv.exe```
 - Start Options / Command line arguments: ```/rootSuffix Exp```
 
 With these settings in place, building the solution will automatically install the extension in the 

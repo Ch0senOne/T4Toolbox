@@ -166,7 +166,7 @@ namespace T4Toolbox.Tests
                 using (new TransformationContext(transformation, transformation.GenerationEnvironment))
                 {
                     Assert.IsNotNull(loggedErrors);
-                    StringAssert.Contains(loggedErrors.Cast<CompilerError>().Single().ErrorText, ParameterName);
+                    StringAssert.Contains(loggedErrors.Cast<CompilerError>().Single().ErrorText, ParameterName, StringComparison.Ordinal);
                 }
             }                        
         }
@@ -215,9 +215,9 @@ namespace T4Toolbox.Tests
                     Assert.AreEqual(1, actualErrors.Count);
                     CompilerError error = actualErrors[0];
                     Assert.IsFalse(error.IsWarning);
-                    StringAssert.Contains(error.ErrorText, ParameterName);
-                    StringAssert.Contains(error.ErrorText, MetadataValue);
-                    StringAssert.Contains(error.ErrorText, transformation.Host.GetType().Name);
+                    StringAssert.Contains(error.ErrorText, ParameterName, StringComparison.Ordinal);
+                    StringAssert.Contains(error.ErrorText, MetadataValue, StringComparison.Ordinal);
+                    StringAssert.Contains(error.ErrorText, transformation.Host.GetType().Name, StringComparison.Ordinal);
                 }
             }
         }
@@ -1037,7 +1037,7 @@ namespace T4Toolbox.Tests
                     Assert.AreNotEqual(typeof(TransformationException), e.GetType());
                     foreach (string keyword in keywords)
                     {
-                        StringAssert.Contains(e.Message, keyword);
+                        StringAssert.Contains(e.Message, keyword, StringComparison.Ordinal);
                     }
                 }
             }

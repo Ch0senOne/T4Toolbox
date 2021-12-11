@@ -6,8 +6,8 @@ namespace T4Toolbox.VisualStudio
 {
     using System;
     using System.ComponentModel.Design;
-    using System.Globalization;
     using System.IO;
+    using Microsoft;
     using Microsoft.VisualStudio.TextTemplating;
     using Microsoft.VisualStudio.TextTemplating.VSHost;
 
@@ -29,6 +29,7 @@ namespace T4Toolbox.VisualStudio
         public virtual bool LocateTemplate(string fullInputPath, ref string templatePath)
         {
             var textTemplating = (ITextTemplating)this.ServiceProvider.GetService(typeof(STextTemplating));
+            Assumes.Present(textTemplating);
 
             // Use the built-in "include" resolution logic to find the template.
             string[] references;

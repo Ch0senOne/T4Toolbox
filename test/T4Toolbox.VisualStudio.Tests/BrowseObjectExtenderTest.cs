@@ -39,10 +39,16 @@ namespace T4Toolbox.VisualStudio.Tests
         [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.GC.Collect", Justification = "This method tests the finalizer logic.")]
         public void FinalizerNotifiesSiteToPreventVisualStudioFromCrashing()
         {
+            void CreateBrowseObjectExtender()
+            {
+                var x = new BrowseObjectExtender(this.dte, this.projectItem, this.extenderSite, 42);
+            }
+
             int deletedExtenderCookie = 0;
             this.extenderSite.NotifyDelete = cookie => deletedExtenderCookie = cookie;
 
-            new BrowseObjectExtender(this.dte, this.projectItem, this.extenderSite, 42);
+            CreateBrowseObjectExtender();
+
             GC.Collect(2, GCCollectionMode.Forced, blocking: true);
             GC.WaitForPendingFinalizers();
 

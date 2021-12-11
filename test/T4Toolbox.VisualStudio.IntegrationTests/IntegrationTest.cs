@@ -9,11 +9,13 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
     using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Linq;
+    using System.Threading.Tasks;
     using System.Windows.Threading;
     using EnvDTE;
     using EnvDTE80;
     using EnvDTE90;
-    using Microsoft.VisualStudio;    
+    using Microsoft.VisualStudio;
+    using Microsoft.VisualStudio.Sdk.TestFramework;
     using Microsoft.VisualStudio.Shell;
     using Microsoft.VisualStudio.Shell.Interop;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -28,6 +30,8 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
         private TargetProject targetProject;
 
         public TestContext TestContext { get; set; }
+
+        internal static GlobalServiceProvider MockServiceProvider { get; private set; }
 
         internal TargetProject TargetProject
         {
@@ -46,23 +50,35 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
         protected static Dispatcher UIThreadDispatcher { get; private set; }
 
         [AssemblyInitialize]
-        public static void AssemblyInitialize(TestContext context)
+        public static async Task AssemblyInitializeAsync(TestContext context)
         {
-#pragma warning disable 618
-            ThreadHelper.Generic.Invoke(delegate
-#pragma warning restore 618
+            if (context == null)
             {
-                CreateTestSolution();
-                UIThreadDispatcher = Dispatcher.CurrentDispatcher;
-            });
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            MockServiceProvider = new GlobalServiceProvider();
+
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            CreateTestSolution();
+            UIThreadDispatcher = Dispatcher.CurrentDispatcher;
         }
 
         [AssemblyCleanup]
-        public static void AssemblyCleanup()
+        public static async Task AssemblyCleanupAsync()
         {
-#pragma warning disable 618
-            ThreadHelper.Generic.Invoke(DeleteTestSolution);
-#pragma warning restore 618
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            
+            DeleteTestSolution();
+            
+            MockServiceProvider.Dispose();
+        }
+
+        [TestInitialize]
+        public void TestInit()
+        {
+            MockServiceProvider.Reset();
         }
 
         public void Dispose()

@@ -9,8 +9,6 @@ namespace T4Toolbox.VisualStudio.Tests.Fakes
 
     using EnvDTE;
 
-    using Microsoft.VsSDK.UnitTestLibrary;
-
     internal class FakeDte : OleServiceProvider, DTE
     {
         private DirectoryInfo testDirectory;
@@ -27,235 +25,235 @@ namespace T4Toolbox.VisualStudio.Tests.Fakes
 
         #region EnvDTE.DTE
 
-        Document _DTE.ActiveDocument
+        Document DTE.ActiveDocument
         {
             get { throw new NotImplementedException(); }
         }
 
-        object _DTE.ActiveSolutionProjects
+        object DTE.ActiveSolutionProjects
         {
             get { throw new NotImplementedException(); }
         }
 
-        Window _DTE.ActiveWindow
+        Window DTE.ActiveWindow
         {
             get { throw new NotImplementedException(); }
         }
 
-        AddIns _DTE.AddIns
+        AddIns DTE.AddIns
         {
             get { throw new NotImplementedException(); }
         }
 
-        DTE _DTE.Application
+        DTE DTE.Application
         {
             get { throw new NotImplementedException(); }
         }
 
-        object _DTE.CommandBars
+        object DTE.CommandBars
         {
             get { throw new NotImplementedException(); }
         }
 
-        string _DTE.CommandLineArguments
+        string DTE.CommandLineArguments
         {
             get { throw new NotImplementedException(); }
         }
 
-        Commands _DTE.Commands
+        Commands DTE.Commands
         {
             get { throw new NotImplementedException(); }
         }
 
-        ContextAttributes _DTE.ContextAttributes
+        ContextAttributes DTE.ContextAttributes
         {
             get { throw new NotImplementedException(); }
         }
 
-        DTE _DTE.DTE
+        DTE DTE.DTE
         {
             get { throw new NotImplementedException(); }
         }
 
-        Debugger _DTE.Debugger
+        Debugger DTE.Debugger
         {
             get { throw new NotImplementedException(); }
         }
 
-        vsDisplay _DTE.DisplayMode
+        vsDisplay DTE.DisplayMode
         {
             get { throw new NotImplementedException(); }
             set { throw new NotImplementedException(); }
         }
 
-        Documents _DTE.Documents
+        Documents DTE.Documents
         {
             get { throw new NotImplementedException(); }
         }
 
-        string _DTE.Edition
+        string DTE.Edition
         {
             get { throw new NotImplementedException(); }
         }
 
-        Events _DTE.Events
+        Events DTE.Events
         {
             get { throw new NotImplementedException(); }
         }
 
-        void _DTE.ExecuteCommand(string commandName, string commandArgs)
+        void DTE.ExecuteCommand(string commandName, string commandArgs)
         {
             throw new NotImplementedException();
         }
 
-        string _DTE.FileName
+        string DTE.FileName
         {
             get { throw new NotImplementedException(); }
         }
 
-        Find _DTE.Find
+        Find DTE.Find
         {
             get { throw new NotImplementedException(); }
         }
 
-        string _DTE.FullName
+        string DTE.FullName
         {
             get { throw new NotImplementedException(); }
         }
 
-        object _DTE.GetObject(string name)
+        object DTE.GetObject(string name)
         {
             throw new NotImplementedException();
         }
 
-        Globals _DTE.Globals
+        Globals DTE.Globals
         {
             get { throw new NotImplementedException(); }
         }
 
-        ItemOperations _DTE.ItemOperations
+        ItemOperations DTE.ItemOperations
         {
             get { throw new NotImplementedException(); }
         }
 
-        wizardResult _DTE.LaunchWizard(string file, ref object[] contextParams)
+        wizardResult DTE.LaunchWizard(string file, ref object[] contextParams)
         {
             throw new NotImplementedException();
         }
 
-        int _DTE.LocaleID
+        int DTE.LocaleID
         {
             get { throw new NotImplementedException(); }
         }
 
-        Macros _DTE.Macros
+        Macros DTE.Macros
         {
             get { throw new NotImplementedException(); }
         }
 
-        DTE _DTE.MacrosIDE
+        DTE DTE.MacrosIDE
         {
             get { throw new NotImplementedException(); }
         }
 
-        Window _DTE.MainWindow
+        Window DTE.MainWindow
         {
             get { throw new NotImplementedException(); }
         }
 
-        vsIDEMode _DTE.Mode
+        vsIDEMode DTE.Mode
         {
             get { throw new NotImplementedException(); }
         }
 
-        string _DTE.Name
+        string DTE.Name
         {
             get { throw new NotImplementedException(); }
         }
 
-        ObjectExtenders _DTE.ObjectExtenders
+        ObjectExtenders DTE.ObjectExtenders
         {
             get { return this.ObjectExtenders; }
         }
 
-        Window _DTE.OpenFile(string viewKind, string fileName)
+        Window DTE.OpenFile(string viewKind, string fileName)
         {
             throw new NotImplementedException();
         }
 
-        void _DTE.Quit()
+        void DTE.Quit()
         {
             throw new NotImplementedException();
         }
 
-        string _DTE.RegistryRoot
+        string DTE.RegistryRoot
         {
             get { throw new NotImplementedException(); }
         }
 
-        string _DTE.SatelliteDllPath(string path, string mame)
+        string DTE.SatelliteDllPath(string path, string mame)
         {
             throw new NotImplementedException();
         }
 
-        SelectedItems _DTE.SelectedItems
+        SelectedItems DTE.SelectedItems
         {
             get { throw new NotImplementedException(); }
         }
 
-        Solution _DTE.Solution
+        Solution DTE.Solution
         {
             get { return this.Solution; }
         }
 
-        SourceControl _DTE.SourceControl
+        SourceControl DTE.SourceControl
         {
             get { throw new NotImplementedException(); }
         }
 
-        StatusBar _DTE.StatusBar
+        StatusBar DTE.StatusBar
         {
             get { throw new NotImplementedException(); }
         }
 
-        bool _DTE.SuppressUI
-        {
-            get { throw new NotImplementedException(); }
-            set { throw new NotImplementedException(); }
-        }
-
-        UndoContext _DTE.UndoContext
-        {
-            get { throw new NotImplementedException(); }
-        }
-
-        bool _DTE.UserControl
+        bool DTE.SuppressUI
         {
             get { throw new NotImplementedException(); }
             set { throw new NotImplementedException(); }
         }
 
-        string _DTE.Version
+        UndoContext DTE.UndoContext
         {
             get { throw new NotImplementedException(); }
         }
 
-        WindowConfigurations _DTE.WindowConfigurations
+        bool DTE.UserControl
+        {
+            get { throw new NotImplementedException(); }
+            set { throw new NotImplementedException(); }
+        }
+
+        string DTE.Version
         {
             get { throw new NotImplementedException(); }
         }
 
-        Windows _DTE.Windows
+        WindowConfigurations DTE.WindowConfigurations
         {
             get { throw new NotImplementedException(); }
         }
 
-        bool _DTE.get_IsOpenFile(string viewKind, string fileName)
+        Windows DTE.Windows
+        {
+            get { throw new NotImplementedException(); }
+        }
+
+        bool DTE.get_IsOpenFile(string viewKind, string fileName)
         {
             throw new NotImplementedException();
         }
 
-        Properties _DTE.get_Properties(string category, string page)
+        Properties DTE.get_Properties(string category, string page)
         {
             throw new NotImplementedException();
         }

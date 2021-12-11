@@ -50,13 +50,13 @@ namespace T4Toolbox.VisualStudio.Editor
         [Fact]
         public static void TemplateQuickInfoSourceProviderSpecifiesNameAttributeRequiredByVisualStudio()
         {
-            Assert.Equal(1, typeof(TemplateQuickInfoSourceProvider).GetCustomAttributes(false).OfType<NameAttribute>().Count());
+            Assert.Single(typeof(TemplateQuickInfoSourceProvider).GetCustomAttributes(false).OfType<NameAttribute>());
         }
 
         [Fact]
         public static void TemplateQuickInfoSourceProviderSpecifiesOrderAttributeRequiredByVisualStudio()
         {
-            Assert.Equal(1, typeof(TemplateQuickInfoSourceProvider).GetCustomAttributes(false).OfType<OrderAttribute>().Count());
+            Assert.Single(typeof(TemplateQuickInfoSourceProvider).GetCustomAttributes(false).OfType<OrderAttribute>());
         }
 
         [Fact]

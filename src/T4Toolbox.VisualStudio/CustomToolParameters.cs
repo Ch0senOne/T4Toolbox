@@ -13,6 +13,7 @@ namespace T4Toolbox.VisualStudio
     using System.Linq;
     using System.Reflection;
     using System.Text.RegularExpressions;
+    using Microsoft;
     using Microsoft.VisualStudio;
     using Microsoft.VisualStudio.Shell.Interop;
     using Microsoft.VisualStudio.TextTemplating;
@@ -145,6 +146,7 @@ namespace T4Toolbox.VisualStudio
         public PropertyDescriptorCollection GetProperties(Attribute[] attributes)
         {
             this.templatingService = (ITextTemplating)this.serviceProvider.GetService(typeof(STextTemplating));
+            Assumes.Present(this.templatingService);
             this.templatingHost = (ITextTemplatingEngineHost)this.templatingService;
 
             string templateFileName;
@@ -246,6 +248,7 @@ namespace T4Toolbox.VisualStudio
                 }
 
                 var templateLocator = (TemplateLocator)this.serviceProvider.GetService(typeof(TemplateLocator));
+                Assumes.Present(templateLocator);
                 if (!templateLocator.LocateTemplate(inputFileName, ref templateFileName))
                 {
                     return false;

@@ -12,6 +12,7 @@ namespace T4Toolbox.VisualStudio
     using System.Globalization;
     using System.Runtime.InteropServices;
     using EnvDTE;
+    using Microsoft;
     using Microsoft.VisualStudio;
     using Microsoft.VisualStudio.Shell.Interop;
 
@@ -122,6 +123,7 @@ namespace T4Toolbox.VisualStudio
                     // Report an error if the template cannot be found
                     string fullPath = value;
                     var templateLocator = (TemplateLocator)this.serviceProvider.GetService(typeof(TemplateLocator));
+                    Assumes.Present(templateLocator);
                     if (!templateLocator.LocateTemplate(this.ProjectItem.FileNames[1], ref fullPath))
                     {
                         throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, "Template '{0}' could not be found", value));

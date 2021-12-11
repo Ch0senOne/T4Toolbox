@@ -80,7 +80,7 @@ namespace T4Toolbox.VisualStudio.Editor
 
             tagger.UpdateTagSpans(new TemplateAnalysis(null, null, null));
 
-            Assert.Equal(0, tagger.GetTags(new NormalizedSnapshotSpanCollection(new SnapshotSpan(buffer.CurrentSnapshot, 0, buffer.CurrentSnapshot.Length))).Count());                        
+            Assert.Empty(tagger.GetTags(new NormalizedSnapshotSpanCollection(new SnapshotSpan(buffer.CurrentSnapshot, 0, buffer.CurrentSnapshot.Length))));                        
         }
 
         [Fact]
@@ -105,8 +105,14 @@ namespace T4Toolbox.VisualStudio.Editor
         public static void TemplateAnalyzerDoesNotPreventTemplateErrorTaggerFromGarbageCollection()
         {
             var buffer = new FakeTextBuffer(string.Empty);
-            var analyzer = TemplateAnalyzer.GetOrCreate(buffer); 
-            var tagger = new WeakReference(new TestableTemplateTagger(buffer));
+            var analyzer = TemplateAnalyzer.GetOrCreate(buffer);
+
+            WeakReference GetTaggerReference()
+            {
+                return new WeakReference(new TestableTemplateTagger(buffer));
+            }
+
+            var tagger = GetTaggerReference();
 
             GC.Collect(2, GCCollectionMode.Forced);
             GC.WaitForPendingFinalizers();

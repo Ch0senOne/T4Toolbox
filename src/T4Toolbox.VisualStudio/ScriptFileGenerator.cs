@@ -10,6 +10,7 @@ namespace T4Toolbox.VisualStudio
     using System.Runtime.InteropServices;
     using System.Text;
     using EnvDTE;
+    using Microsoft;
     using Microsoft.VisualStudio;
     using Microsoft.VisualStudio.Designer.Interfaces;
     using Microsoft.VisualStudio.Shell.Interop;
@@ -87,9 +88,11 @@ namespace T4Toolbox.VisualStudio
             // Remove <Template> metadata from the project item and refresh the properties window
             ErrorHandler.ThrowOnFailure(propertyStorage.SetItemAttribute(inputItemId, ItemMetadata.Template, null));
             var propertyBrowser = (IVSMDPropertyBrowser)this.GlobalServiceProvider.GetService(typeof(SVSMDPropertyBrowser));
+            Assumes.Present(propertyBrowser);
             propertyBrowser.Refresh();
 
             var templateLocator = (TemplateLocator)this.GlobalServiceProvider.GetService(typeof(TemplateLocator));
+            Assumes.Present(templateLocator);
             if (!templateLocator.LocateTemplate(inputFileName, ref templatePath))
             {
                 return null;

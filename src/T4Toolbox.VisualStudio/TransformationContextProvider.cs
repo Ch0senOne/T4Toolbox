@@ -8,6 +8,7 @@ namespace T4Toolbox.VisualStudio
     using System.ComponentModel.Design;
     using System.IO;
     using System.Linq;
+    using Microsoft;
     using Microsoft.VisualStudio;
     using Microsoft.VisualStudio.Shell;
     using Microsoft.VisualStudio.Shell.Interop;
@@ -108,7 +109,8 @@ namespace T4Toolbox.VisualStudio
             watcher.Path = Path.GetDirectoryName(inputFile);
             watcher.Filter = Path.GetFileNameWithoutExtension(inputFile) + "*." + this.GetTransformationOutputExtensionFromHost();
 
-            FileSystemEventHandler runManager = (sender, args) =>
+#pragma warning disable VSTHRD101 // Avoid unsupported async delegates
+            FileSystemEventHandler runManager = async (sender, args) =>
             {
                 watcher.Dispose();
 
@@ -120,8 +122,10 @@ namespace T4Toolbox.VisualStudio
                 }
 
                 // Finish updating the output files on the UI thread
-                ThreadHelper.Generic.BeginInvoke(manager.DoWork);
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                manager.DoWork();
             };
+#pragma warning restore VSTHRD101 // Avoid unsupported async delegates
 
             watcher.Created += runManager;
             watcher.Changed += runManager;
@@ -152,6 +156,7 @@ namespace T4Toolbox.VisualStudio
         private string GetTransformationOutputExtensionFromHost()
         {
             var components = (ITextTemplatingComponents)this.serviceProvider.GetService(typeof(STextTemplating));
+            Assumes.Present(components);
             var callback = components.Callback as TextTemplatingCallback; // Callback can be passed to ITextTemplating.ProcessTemplate by user code.
             if (callback == null)
             {

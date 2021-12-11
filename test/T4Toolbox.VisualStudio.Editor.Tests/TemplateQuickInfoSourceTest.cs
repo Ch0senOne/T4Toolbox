@@ -27,7 +27,7 @@ namespace T4Toolbox.VisualStudio.Editor
         }
 
         [Fact]
-        public static async Task AugmentQuickInfoSessionReturnsNoContentOrApplicableSpanWhenBufferIsEmpty()
+        public static async Task AugmentQuickInfoSessionReturnsNoContentOrApplicableSpanWhenBufferIsEmptyAsync()
         {
             var buffer = new FakeTextBuffer(string.Empty);
             var session = new FakeQuickInfoSession();
@@ -40,7 +40,7 @@ namespace T4Toolbox.VisualStudio.Editor
         }
 
         [Fact]
-        public static async Task AugmentQuickInfoSessionReturnsNoContentOrApplicableSpanSyntaxNodeAtTriggerPointHasNoDescription()
+        public static async Task AugmentQuickInfoSessionReturnsNoContentOrApplicableSpanSyntaxNodeAtTriggerPointHasNoDescriptionAsync()
         {
             var buffer = new FakeTextBuffer("<# code #>");
             var session = new FakeQuickInfoSession { SnapshotTriggerPoint = new SnapshotPoint(buffer.CurrentSnapshot, 3) };
@@ -53,7 +53,7 @@ namespace T4Toolbox.VisualStudio.Editor
         }
 
         [Fact]
-        public static async Task AugmentQuickInfoSessionReturnsNoContentOrApplicableSpanWhenBufferContainsTemplateThatCouldNotBeParsed()
+        public static async Task AugmentQuickInfoSessionReturnsNoContentOrApplicableSpanWhenBufferContainsTemplateThatCouldNotBeParsedAsync()
         {
             var buffer = new FakeTextBuffer("<#");
             var session = new FakeQuickInfoSession { SnapshotTriggerPoint = new SnapshotPoint(buffer.CurrentSnapshot, 1) };
@@ -66,7 +66,7 @@ namespace T4Toolbox.VisualStudio.Editor
         }
 
         [Fact]
-        public static async Task AugmentQuickInfoSessionReturnsDescriptionOfSyntaxNodeAtTriggerPoint()
+        public static async Task AugmentQuickInfoSessionReturnsDescriptionOfSyntaxNodeAtTriggerPointAsync()
         {
             var buffer = new FakeTextBuffer("<#@ assembly name=\"System\" #>");
             var session = new FakeQuickInfoSession { SnapshotTriggerPoint = new SnapshotPoint(buffer.CurrentSnapshot, 5) };
@@ -79,7 +79,7 @@ namespace T4Toolbox.VisualStudio.Editor
         }
 
         [Fact]
-        public static async Task AugmentQuickInfoSessionReturnsSpanOfSyntaxNodeProvidingDescription()
+        public static async Task AugmentQuickInfoSessionReturnsSpanOfSyntaxNodeProvidingDescriptionAsync()
         {
             var buffer = new FakeTextBuffer("<#@ assembly name=\"System\" #>");
             var session = new FakeQuickInfoSession { SnapshotTriggerPoint = new SnapshotPoint(buffer.CurrentSnapshot, 15) };

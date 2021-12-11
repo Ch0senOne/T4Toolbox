@@ -453,7 +453,7 @@ namespace T4Toolbox.Tests
             var error = errors.Cast<CompilerError>().Single();
             foreach (string keyword in keywords)
             {
-                StringAssert.Contains(error.ErrorText, keyword);
+                StringAssert.Contains(error.ErrorText, keyword, StringComparison.Ordinal);
             }
         }
     }

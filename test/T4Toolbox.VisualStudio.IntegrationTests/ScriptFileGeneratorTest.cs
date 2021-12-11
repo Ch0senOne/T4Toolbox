@@ -9,6 +9,7 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
     using System.Text;
     using System.Threading.Tasks;
     using EnvDTE;
+    using Microsoft.VisualStudio.Shell;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Microsoft.VisualStudio.TextTemplating;
     using VSLangProj;
@@ -20,133 +21,115 @@ namespace T4Toolbox.VisualStudio.IntegrationTests
         private const string TextFileItemTemplate = "Text File";
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task GeneratorProducesEmptyScriptFile()
+        public async Task GeneratorProducesEmptyScriptFileAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
-                inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = ScriptFileGenerator.Name;
-                ProjectItem scriptItem = inputItem.ProjectItems.Cast<ProjectItem>().Single();
-                Assert.AreEqual(".tt", Path.GetExtension(scriptItem.FileNames[1]));
-                Assert.AreEqual("TextTemplatingFileGenerator", scriptItem.GetItemAttribute(ItemMetadata.Generator));
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
+            inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = ScriptFileGenerator.Name;
+            ProjectItem scriptItem = inputItem.ProjectItems.Cast<ProjectItem>().Single();
+            Assert.AreEqual(".tt", Path.GetExtension(scriptItem.FileNames[1]));
+            Assert.AreEqual("TextTemplatingFileGenerator", scriptItem.GetItemAttribute(ItemMetadata.Generator));
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task GeneratedScriptFileSpecifiesDefaultTextTemplateLanguageForProjectType()
+        public async Task GeneratedScriptFileSpecifiesDefaultTextTemplateLanguageForProjectTypeAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
-                inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = ScriptFileGenerator.Name;
-                ProjectItem scriptItem = inputItem.ProjectItems.Cast<ProjectItem>().Single();
-                string scriptContent = File.ReadAllText(scriptItem.FileNames[1]);
-                StringAssert.StartsWith(scriptContent, "<#@ template language=\"" + this.TargetProject.DefaultTextTemplateLanguage + "\"");
-            });                        
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
+            inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = ScriptFileGenerator.Name;
+            ProjectItem scriptItem = inputItem.ProjectItems.Cast<ProjectItem>().Single();
+            string scriptContent = File.ReadAllText(scriptItem.FileNames[1]);
+            StringAssert.StartsWith(scriptContent, "<#@ template language=\"" + this.TargetProject.DefaultTextTemplateLanguage + "\"");
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task GeneratedScriptFileSpecifiesDefaultProjectFileExtension()
+        public async Task GeneratedScriptFileSpecifiesDefaultProjectFileExtensionAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
-                inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = ScriptFileGenerator.Name;
-                ProjectItem scriptItem = inputItem.ProjectItems.Cast<ProjectItem>().Single();
-                string scriptContent = File.ReadAllText(scriptItem.FileNames[1]);
-                StringAssert.Contains(scriptContent, "<#@ output extension=\"" + this.TargetProject.CodeFileExtension.Trim('.') + "\"");
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
+            inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = ScriptFileGenerator.Name;
+            ProjectItem scriptItem = inputItem.ProjectItems.Cast<ProjectItem>().Single();
+            string scriptContent = File.ReadAllText(scriptItem.FileNames[1]);
+            StringAssert.Contains(scriptContent, "<#@ output extension=\"" + this.TargetProject.CodeFileExtension.Trim('.') + "\"");
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task GeneratorTriggersTransformationOfNewlyGeneratedScriptFile()
+        public async Task GeneratorTriggersTransformationOfNewlyGeneratedScriptFileAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
-                inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = ScriptFileGenerator.Name;
-                ProjectItem scriptITem = inputItem.ProjectItems.Cast<ProjectItem>().Single();
-                Assert.AreEqual(1, scriptITem.ProjectItems.Count);
-            });            
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
+            inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = ScriptFileGenerator.Name;
+            ProjectItem scriptITem = inputItem.ProjectItems.Cast<ProjectItem>().Single();
+            Assert.AreEqual(1, scriptITem.ProjectItems.Count);
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task GeneratorPreservesExistingScriptFile()
+        public async Task GeneratorPreservesExistingScriptFileAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
-                File.WriteAllText(Path.ChangeExtension(inputItem.FileNames[1], ".tt"), TestText);
-                inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = ScriptFileGenerator.Name;
-                ProjectItem scriptItem = inputItem.ProjectItems.Cast<ProjectItem>().Single();
-                Assert.AreEqual(TestText, File.ReadAllText(scriptItem.FileNames[1]));
-            });                        
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
+            File.WriteAllText(Path.ChangeExtension(inputItem.FileNames[1], ".tt"), TestText);
+            inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = ScriptFileGenerator.Name;
+            ProjectItem scriptItem = inputItem.ProjectItems.Cast<ProjectItem>().Single();
+            Assert.AreEqual(TestText, File.ReadAllText(scriptItem.FileNames[1]));
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task GeneratorPreservesEncodingOfExistingScriptFile()
+        public async Task GeneratorPreservesEncodingOfExistingScriptFileAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
-                File.WriteAllText(Path.ChangeExtension(inputItem.FileNames[1], ".tt"), TestText, Encoding.UTF32);
-                inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = ScriptFileGenerator.Name;
-                ProjectItem scriptItem = inputItem.ProjectItems.Cast<ProjectItem>().Single();
-                Assert.AreEqual(Encoding.UTF32, EncodingHelper.GetEncoding(scriptItem.FileNames[1]));
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
+            File.WriteAllText(Path.ChangeExtension(inputItem.FileNames[1], ".tt"), TestText, Encoding.UTF32);
+            inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = ScriptFileGenerator.Name;
+            ProjectItem scriptItem = inputItem.ProjectItems.Cast<ProjectItem>().Single();
+            Assert.AreEqual(Encoding.UTF32, EncodingHelper.GetEncoding(scriptItem.FileNames[1]));
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task GeneratorTriggersTransformationOfExistingScriptFile()
+        public async Task GeneratorTriggersTransformationOfExistingScriptFileAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
-                File.WriteAllText(Path.ChangeExtension(inputItem.FileNames[1], ".tt"), TestText);
-                inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = ScriptFileGenerator.Name;
-                ProjectItem scriptItem = inputItem.ProjectItems.Cast<ProjectItem>().Single();
-                ProjectItem outputItem = scriptItem.ProjectItems.Cast<ProjectItem>().Single();
-                Assert.AreEqual(TestText, File.ReadAllText(outputItem.FileNames[1]));
-            });            
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
+            File.WriteAllText(Path.ChangeExtension(inputItem.FileNames[1], ".tt"), TestText);
+            inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = ScriptFileGenerator.Name;
+            ProjectItem scriptItem = inputItem.ProjectItems.Cast<ProjectItem>().Single();
+            ProjectItem outputItem = scriptItem.ProjectItems.Cast<ProjectItem>().Single();
+            Assert.AreEqual(TestText, File.ReadAllText(outputItem.FileNames[1]));
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task GeneratorSavesExistingScriptFileOpenedInEditorToPreventRunCustomToolImplementationFromSilentlyDiscardingChanges()
+        public async Task GeneratorSavesExistingScriptFileOpenedInEditorToPreventRunCustomToolImplementationFromSilentlyDiscardingChangesAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
-                inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = ScriptFileGenerator.Name;
-                ProjectItem scriptItem = inputItem.ProjectItems.Cast<ProjectItem>().Single();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
+            inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = ScriptFileGenerator.Name;
+            ProjectItem scriptItem = inputItem.ProjectItems.Cast<ProjectItem>().Single();
 
-                // Simulate changing the script file in Visual Studio editor
-                Document document = Dte.Documents.Open(scriptItem.FileNames[1]);
-                var textDocument = (TextDocument)document.Object();
-                textDocument.Selection.EndOfDocument(Extend: true);
-                textDocument.Selection.Text = TestText;
+            // Simulate changing the script file in Visual Studio editor
+            Document document = Dte.Documents.Open(scriptItem.FileNames[1]);
+            var textDocument = (TextDocument)document.Object();
+            textDocument.Selection.EndOfDocument(Extend: true);
+            textDocument.Selection.Text = TestText;
 
-                // Run the custom tool
-                ((VSProjectItem)inputItem.Object).RunCustomTool();
+            // Run the custom tool
+            ((VSProjectItem)inputItem.Object).RunCustomTool();
 
-                // Verify that changes made in the editor were saved
-                Assert.AreEqual(TestText, File.ReadAllText(scriptItem.FileNames[1]));
-            });
+            // Verify that changes made in the editor were saved
+            Assert.AreEqual(TestText, File.ReadAllText(scriptItem.FileNames[1]));
         }
 
         [TestMethod, DataSource(TargetProject.Provider, TargetProject.Connection, TargetProject.Table, DataAccessMethod.Sequential)]
-        public async Task GeneratorConvertsCustomToolTemplateToScriptFile()
+        public async Task GeneratorConvertsCustomToolTemplateToScriptFileAsync()
         {
-            await UIThreadDispatcher.InvokeAsync(delegate
-            {
-                ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
-                string customToolTemplate = Path.GetRandomFileName();
-                File.WriteAllText(Path.Combine(Path.GetDirectoryName(inputItem.FileNames[1]), customToolTemplate), TestText);
-                inputItem.Properties.Item(ProjectItemProperty.CustomToolTemplate).Value = customToolTemplate;
-                inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = ScriptFileGenerator.Name;
-                ProjectItem scriptItem = inputItem.ProjectItems.Cast<ProjectItem>().Single();
-                Assert.AreEqual(TestText, File.ReadAllText(scriptItem.FileNames[1]));
-                Assert.AreEqual(string.Empty, inputItem.Properties.Item(ProjectItemProperty.CustomToolTemplate).Value);
-            });                                    
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            ProjectItem inputItem = this.CreateTestProjectItem(TextFileItemTemplate);
+            string customToolTemplate = Path.GetRandomFileName();
+            File.WriteAllText(Path.Combine(Path.GetDirectoryName(inputItem.FileNames[1]), customToolTemplate), TestText);
+            inputItem.Properties.Item(ProjectItemProperty.CustomToolTemplate).Value = customToolTemplate;
+            inputItem.Properties.Item(ProjectItemProperty.CustomTool).Value = ScriptFileGenerator.Name;
+            ProjectItem scriptItem = inputItem.ProjectItems.Cast<ProjectItem>().Single();
+            Assert.AreEqual(TestText, File.ReadAllText(scriptItem.FileNames[1]));
+            Assert.AreEqual(string.Empty, inputItem.Properties.Item(ProjectItemProperty.CustomToolTemplate).Value);
         }
     }
 }

@@ -38,8 +38,8 @@ namespace T4Toolbox
         public const string Description = "Extends code generation capabilities of Text Templates.";
 
 #if SIGN_ASSEMBLY
-        public const string PublicKey = ", PublicKey=00240000048000009400000006020000002400005253413100040000010001005d511b529d32a2542d3c9c5824631a08e8dc6ea3e5a6175989d27df82bb803bd869f9ada9fbc11ce7a99208b7228c6b9b2ce9440bdc61062bf27c01d2633cee0bd0076dc2ca87c5f88a79316cf8b4a9db4d79f8d019b2b289b3a9fedccb610d53d6e3b6d9dfe05d8aee8e5ccb9f5a709ed0c93c88824c552787bded111d02bca";
-        public const string PublicKeyToken = "dc4a538672a7b38f";
+        public const string PublicKey = ", PublicKey=002400000480000094000000060200000024000052534131000400000100010069e19ca99cac8ad7dca45d6bb7edcff99c2516b95b439451ba6e9acedc4acc6d539d8f3fa6d1071e56589910968391c33a8e0393cd54c4063347d931428f2e148b5d3e7d34aa92b0a825a0a580f6f86265efab9c41d3ddb378f8118fcddd1198442aff3227913e253c53888c77fdf572fcad92290f041b3050f2c6ae70407bbe";
+        public const string PublicKeyToken = "d2bd2c2d7888b9f1";
 #else
         public const string PublicKey = "";
         public const string PublicKeyToken = "";
@@ -48,6 +48,6 @@ namespace T4Toolbox
         /// <summary>
         /// Version of the T4 Toolbox assembly.
         /// </summary>
-        public const string Version = "15.0.0.0";
+        public const string Version = "17.0.0.0";
     }
 }

@@ -6,6 +6,7 @@ namespace T4Toolbox.VisualStudio
 {
     using System;
     using EnvDTE;
+    using Microsoft;
     using Microsoft.VisualStudio.Shell.Interop;
 
     /// <summary>
@@ -24,6 +25,7 @@ namespace T4Toolbox.VisualStudio
         {
             this.serviceProvider = serviceProvider;
             this.objectExtenders = (ObjectExtenders)serviceProvider.GetService(typeof(ObjectExtenders));
+            Assumes.Present(this.objectExtenders);
             this.extenderCategory = extenderCategory;
             this.providerCookie = this.objectExtenders.RegisterExtenderProvider(extenderCategory, BrowseObjectExtenderProvider.ExtenderName, this);
         }

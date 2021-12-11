@@ -134,7 +134,7 @@ namespace T4Toolbox.VisualStudio
                     "component");
             }
 
-            parent.GetProjectItem(out project, out itemId);            
+            parent.GetProjectItem(out project, out itemId);
         }
 
         private object GetDefaultValue()

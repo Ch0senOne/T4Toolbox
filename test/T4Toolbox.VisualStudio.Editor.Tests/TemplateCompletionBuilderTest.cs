@@ -109,7 +109,7 @@ namespace T4Toolbox.VisualStudio.Editor
             var directive = new OutputDirective(new DirectiveBlockStart(0), new DirectiveName(4, "output"), attributes, new BlockEnd(32));
             var builder = new TemplateCompletionBuilder(28);
             builder.Visit(directive);
-            Assert.True(string.Equals(builder.Completions.Single().DisplayText, "encoding", StringComparison.OrdinalIgnoreCase));
+            Assert.Equal("encoding", builder.Completions.Single().DisplayText, ignoreCase: true);
         }
 
         [Fact]
